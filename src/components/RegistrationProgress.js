@@ -2,14 +2,13 @@ import React, { Component } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import applyScale from '../helpers/applyScale';
+import commonStyles from '../config/commonStyles';
 
 const { width } = Dimensions.get('window');
 const stdStyles = {
-  activeSize: applyScale(40),
-  inactiveSize: applyScale(30),
+  activeSize: applyScale(45),
+  inactiveSize: applyScale(25),
   progressLineHeight: applyScale(3),
-  iconSize: applyScale(20),
-  iconColor: '#fff',
 };
 const styles = StyleSheet.create({
   container: {
@@ -25,7 +24,7 @@ const styles = StyleSheet.create({
   progressLine: {
     width,
     height: stdStyles.progressLineHeight,
-    backgroundColor: '#000',
+    backgroundColor: commonStyles.highlightColor,
     position: 'absolute',
     top: stdStyles.activeSize / 2 - stdStyles.progressLineHeight / 2,
     left: 0,
@@ -37,7 +36,7 @@ const ProgressCircle = ({ completed, active }) => {
     height: active ? stdStyles.activeSize : stdStyles.inactiveSize,
     width: active ? stdStyles.activeSize : stdStyles.inactiveSize,
     borderRadius: active ? stdStyles.activeSize / 2 : stdStyles.inactiveSize / 2,
-    backgroundColor: '#000',
+    backgroundColor: commonStyles.highlightColor,
   };
   return (
     <View
@@ -47,8 +46,8 @@ const ProgressCircle = ({ completed, active }) => {
         completed &&
         <Ionicons
           name='md-checkmark'
-          color={stdStyles.iconColor}
-          size={stdStyles.iconSize}
+          color={commonStyles.primaryColor}
+          size={commonStyles.iconSize}
         />
       }
     </View>

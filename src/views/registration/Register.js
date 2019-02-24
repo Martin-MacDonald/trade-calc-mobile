@@ -17,6 +17,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: StatusBar.currentHeight + applyScale(30),
   },
+  inputField: {
+    color: commonStyles.highlightColor,
+    fontSize: commonStyles.normalTextSize,
+    letterSpacing: applyScale(1.5),
+  },
 });
 
 class Register extends Component {
@@ -105,7 +110,7 @@ class Register extends Component {
     } = this.state;
     return (
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { backgroundColor: commonStyles.primaryColor }]}
       >
         <RegistrationProgress 
           style={styles.registrationProgress}
@@ -116,6 +121,7 @@ class Register extends Component {
           shownFieldIndex === 0 &&
           <TextInputContainer>
             <TextInput
+              style={styles.inputField}
               ref={(input) => this.inputFields['username'] = input}
               textContentType='username'
               onChangeText={(username) => this.setState({ username })}
@@ -130,6 +136,7 @@ class Register extends Component {
           shownFieldIndex === 1 &&
           <TextInputContainer>
             <TextInput
+              style={styles.inputField}
               ref={(input) => this.inputFields['email'] = input}
               textContentType='emailAddress'
               onChangeText={(email) => this.setState({ email })}
@@ -144,6 +151,7 @@ class Register extends Component {
           shownFieldIndex === 2 &&
           <TextInputContainer>
             <TextInput
+              style={styles.inputField}
               ref={(input) => this.inputFields['password'] = input}
               textContentType='password'
               onChangeText={(password) => this.setState({ password })}
@@ -159,6 +167,7 @@ class Register extends Component {
           shownFieldIndex === 3 &&
           <TextInputContainer>
             <TextInput
+              style={styles.inputField}
               ref={(input) => this.inputFields['confirmPassword'] = input}
               textContentType='password'
               onChangeText={(confirmPassword) => this.setState({ confirmPassword })}
