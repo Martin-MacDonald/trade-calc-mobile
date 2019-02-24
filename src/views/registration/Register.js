@@ -1,23 +1,33 @@
 import React, { Component } from 'react';
 import {
-  View,
+  ScrollView,
   TextInput,
   StyleSheet,
+  StatusBar,
 } from 'react-native';
 import TextInputContainer from '../../components/TextInputContainer';
+import RegistrationProgress from '../../components/RegistrationProgress';
+import constants from '../../config/constants';
 import commonStyles from '../../config/commonStyles';
+import applyScale from '../../helpers/applyScale';
 
 const styles = StyleSheet.create({
   container: commonStyles.container,
+  registrationProgress: {
+    position: 'absolute',
+    top: StatusBar.currentHeight + applyScale(30),
+  },
 });
 
 class Register extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: '',
-      company: '',
+      username: '',
+      usernameFormatError: false,
+      usernameExistsError: false,
       email: '',
+      emailExistsError: false,
       password: '',
       confirmPassword: '',
       shownFieldIndex: 0,
@@ -27,37 +37,92 @@ class Register extends Component {
 
   moveToNextField = (field) => {
     const { shownFieldIndex } = this.state;
-    if (shownFieldIndex === 4) return;
+    if (shownFieldIndex === 3) return;
     this.setState({ shownFieldIndex: shownFieldIndex + 1 }, () => {
       if (field) this.inputFields[field].focus();
     });
   };
 
+  checkUsername = async () => {
+    const { username } = this.state;
+    const usernameRegex = /^[a-zA-Z0-9]{6,}$/;
+    if (!username || !(username.match(usernameRegex))) {
+      console.log('doesn\'t match');
+      this.setState({ usernameFormatError: true });
+      return;
+    }
+    try {
+      const res = await fetch(`${constants.apiURL}/user/checkUsername`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username })
+      });
+      if (res.status === 400) {
+        this.setState({ usernameExistsError: true });
+        throw new Error('username already exists');
+      }
+      if (!res.ok) {
+        throw new Error('error checking username');
+      }
+      this.moveToNextField('email')
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  checkEmail = async () => {
+    const { email } = this.state;
+    try {
+      const res = await fetch(`${constants.apiURL}/user/checkEmail`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
+      });
+      if (res.status === 400) {
+        this.setState({ emailExistsError: true });
+        throw new Error('an account with that email already exists');
+      }
+      if (!res.ok) {
+        throw new Error('error checking emai');
+      }
+      this.moveToNextField('password')
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   render() {
     const {
-      name,
-      company,
+      username,
       email,
       password,
       confirmPassword,
       shownFieldIndex,
     } = this.state;
     return (
-      <View
-        style={styles.container}
+      <ScrollView
+        contentContainerStyle={styles.container}
       >
+        <RegistrationProgress 
+          style={styles.registrationProgress}
+          number={4}
+          progress={shownFieldIndex}
+        />
         {
           shownFieldIndex === 0 &&
           <TextInputContainer>
             <TextInput
-              ref={(input) => this.inputFields['name'] = input}
-              textContentType='name'
-              onChangeText={(name) => this.setState({ name })}
-              value={name}
-              placeholder='Name'
-              blurOnSubmit={false}
+              ref={(input) => this.inputFields['username'] = input}
+              textContentType='username'
+              onChangeText={(username) => this.setState({ username })}
+              value={username}
+              placeholder='Username'
               returnKeyType='next'
-              onSubmitEditing={() => this.moveToNextField('company')}
+              onSubmitEditing={() => this.checkUsername()}
             />
           </TextInputContainer>
         }
@@ -65,33 +130,18 @@ class Register extends Component {
           shownFieldIndex === 1 &&
           <TextInputContainer>
             <TextInput
-              ref={(input) => this.inputFields['company'] = input}
-              onChangeText={(company) => this.setState({ company })}
-              value={company}
-              placeholder='Company'
-              blurOnSubmit={false}
-              returnKeyType='next'
-              onSubmitEditing={() => this.moveToNextField('email')}
-            />
-          </TextInputContainer>
-        }
-        {
-          shownFieldIndex === 2 &&
-          <TextInputContainer>
-            <TextInput
               ref={(input) => this.inputFields['email'] = input}
               textContentType='emailAddress'
               onChangeText={(email) => this.setState({ email })}
               value={email}
               placeholder='Email'
-              blurOnSubmit={false}
               returnKeyType='next'
-              onSubmitEditing={() => this.moveToNextField('password')}
+              onSubmitEditing={() => this.checkEmail()}
             />
           </TextInputContainer>
         }
         {
-          shownFieldIndex === 3 &&
+          shownFieldIndex === 2 &&
           <TextInputContainer>
             <TextInput
               ref={(input) => this.inputFields['password'] = input}
@@ -100,14 +150,13 @@ class Register extends Component {
               value={password}
               placeholder='Password'
               secureTextEntry
-              blurOnSubmit={false}
               returnKeyType='next'
               onSubmitEditing={() => this.moveToNextField('confirmPassword')}
             />
           </TextInputContainer>
         }
         {
-          shownFieldIndex === 4 &&
+          shownFieldIndex === 3 &&
           <TextInputContainer>
             <TextInput
               ref={(input) => this.inputFields['confirmPassword'] = input}
@@ -116,13 +165,12 @@ class Register extends Component {
               value={confirmPassword}
               placeholder='Confirm Password'
               secureTextEntry
-              blurOnSubmit={true}
               returnKeyType='done'
               onSubmitEditing={() => this.moveToNextField()}
             />
           </TextInputContainer>
         }
-      </View>
+      </ScrollView>
     );
   }
 }

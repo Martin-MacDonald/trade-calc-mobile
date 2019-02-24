@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
 import {
   Animated,
-  View,
   StyleSheet,
 } from 'react-native';
+import applyScale from '../helpers/applyScale';
 
 const styles = StyleSheet.create({
   container: {
     borderColor: '#000',
-    borderWidth: 1,
-    padding: 10,
+    borderWidth: applyScale(1),
+    padding: applyScale(10),
   }
 });
 
