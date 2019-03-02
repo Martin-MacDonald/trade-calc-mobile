@@ -50,9 +50,8 @@ class Register extends Component {
 
   checkUsername = async () => {
     const { username } = this.state;
-    const usernameRegex = /^[a-zA-Z0-9]{6,}$/;
+    const usernameRegex = /^[a-zA-Z0-9]{6,12}$/;
     if (!username || !(username.match(usernameRegex))) {
-      console.log('doesn\'t match');
       this.setState({ usernameFormatError: true });
       return;
     }
@@ -64,12 +63,9 @@ class Register extends Component {
         },
         body: JSON.stringify({ username })
       });
-      if (res.status === 400) {
+      if (res.status === 409) {
         this.setState({ usernameExistsError: true });
         throw new Error('username already exists');
-      }
-      if (!res.ok) {
-        throw new Error('error checking username');
       }
       this.moveToNextField('email')
     } catch (err) {
@@ -107,6 +103,8 @@ class Register extends Component {
       password,
       confirmPassword,
       shownFieldIndex,
+      usernameFormatError,
+      usernameExistsError,
     } = this.state;
     return (
       <ScrollView
@@ -119,16 +117,23 @@ class Register extends Component {
         />
         {
           shownFieldIndex === 0 &&
-          <TextInputContainer>
+          <TextInputContainer
+            errorState={usernameFormatError || usernameExistsError}
+          >
             <TextInput
               style={styles.inputField}
               ref={(input) => this.inputFields['username'] = input}
               textContentType='username'
-              onChangeText={(username) => this.setState({ username })}
+              onChangeText={(username) => this.setState({
+                username, 
+                usernameFormatError: false,
+                usernameExistsError: false,
+              })}
               value={username}
               placeholder='Username'
               returnKeyType='next'
               onSubmitEditing={() => this.checkUsername()}
+              autoCapitalize='none'
             />
           </TextInputContainer>
         }
@@ -144,6 +149,8 @@ class Register extends Component {
               placeholder='Email'
               returnKeyType='next'
               onSubmitEditing={() => this.checkEmail()}
+              autoCapitalize='none'
+              keyboardType='email-address'
             />
           </TextInputContainer>
         }

@@ -5,6 +5,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import ShakingView from './ShakingView';
 import applyScale from '../helpers/applyScale';
 import commonStyles from '../config/commonStyles';
 
@@ -50,33 +51,37 @@ class TextInputContainer extends Component {
   }
 
   render() {
-    const { children } = this.props;
+    const { children, errorState } = this.props;
     return (
-      <Animated.View
-        style={[styles.container, {
-          transform: [
-            {
-              translateX: this.state.x,
-            }
-          ]
-        }]}
+      <ShakingView
+        errorState={errorState}
       >
-        <View
-          style={styles.inputContainer}
+        <Animated.View
+          style={[styles.container, {
+            transform: [
+              {
+                translateX: this.state.x,
+              }
+            ]
+          }]}
         >
-          {children}
-        </View>
-        <View
-          style={styles.nextButtonContainer}
-        >
-          <Ionicons
-            style={styles.nextButton}
-            name='md-arrow-forward'
-            color={commonStyles.primaryColor}
-            size={commonStyles.iconSize}
-          />
-        </View>
-      </Animated.View>
+          <View
+            style={styles.inputContainer}
+          >
+            {children}
+          </View>
+          <View
+            style={styles.nextButtonContainer}
+          >
+            <Ionicons
+              style={styles.nextButton}
+              name='md-arrow-forward'
+              color={commonStyles.primaryColor}
+              size={commonStyles.iconSize}
+            />
+          </View>
+        </Animated.View>
+      </ShakingView>
     );
   }
 }
