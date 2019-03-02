@@ -38,6 +38,14 @@ class Register extends Component {
       shownFieldIndex: 0,
     };
     this.inputFields = {};
+    this.usernameFormatMessage = {
+      title: 'Username Incorrect Format',
+      message: 'Must be between 6 and 12 digits and only contain alphanumeric characters',
+    };
+    this.usernameExistsMessage = {
+      title: 'Username Exists',
+      message: 'Sorry but that username is already taken',
+    };
   }
 
   moveToNextField = (field) => {
@@ -65,7 +73,10 @@ class Register extends Component {
       });
       if (res.status === 409) {
         this.setState({ usernameExistsError: true });
-        throw new Error('username already exists');
+        return;
+      }
+      if (!res.ok) {
+        throw new Error('unable to check username')
       }
       this.moveToNextField('email')
     } catch (err) {
@@ -83,12 +94,12 @@ class Register extends Component {
         },
         body: JSON.stringify({ email })
       });
-      if (res.status === 400) {
+      if (res.status === 409) {
         this.setState({ emailExistsError: true });
-        throw new Error('an account with that email already exists');
+        return;
       }
       if (!res.ok) {
-        throw new Error('error checking emai');
+        throw new Error('unable to check email')
       }
       this.moveToNextField('password')
     } catch (err) {
@@ -119,6 +130,7 @@ class Register extends Component {
           shownFieldIndex === 0 &&
           <TextInputContainer
             errorState={usernameFormatError || usernameExistsError}
+            errorMessage={usernameFormatError ? this.usernameFormatMessage : this.usernameExistsMessage}
           >
             <TextInput
               style={styles.inputField}

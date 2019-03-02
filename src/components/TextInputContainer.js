@@ -3,9 +3,9 @@ import {
   Animated,
   View,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import ShakingView from './ShakingView';
 import applyScale from '../helpers/applyScale';
 import commonStyles from '../config/commonStyles';
 
@@ -50,38 +50,50 @@ class TextInputContainer extends Component {
     }).start();
   }
 
+  componentDidUpdate() {
+    const { errorState, errorMessage } = this.props;
+    if (errorState) {
+      Alert.alert(
+        errorMessage.title,
+        errorMessage.message,
+        [
+          {
+            text: 'Ok',
+            style: 'cancel',
+          },
+        ],
+      );
+    }
+  }
+
   render() {
-    const { children, errorState } = this.props;
+    const { children } = this.props;
     return (
-      <ShakingView
-        errorState={errorState}
+      <Animated.View
+        style={[styles.container, {
+          transform: [
+            {
+              translateX: this.state.x,
+            }
+          ]
+        }]}
       >
-        <Animated.View
-          style={[styles.container, {
-            transform: [
-              {
-                translateX: this.state.x,
-              }
-            ]
-          }]}
+        <View
+          style={styles.inputContainer}
         >
-          <View
-            style={styles.inputContainer}
-          >
-            {children}
-          </View>
-          <View
-            style={styles.nextButtonContainer}
-          >
-            <Ionicons
-              style={styles.nextButton}
-              name='md-arrow-forward'
-              color={commonStyles.primaryColor}
-              size={commonStyles.iconSize}
-            />
-          </View>
-        </Animated.View>
-      </ShakingView>
+          {children}
+        </View>
+        <View
+          style={styles.nextButtonContainer}
+        >
+          <Ionicons
+            style={styles.nextButton}
+            name='md-arrow-forward'
+            color={commonStyles.primaryColor}
+            size={commonStyles.iconSize}
+          />
+        </View>
+      </Animated.View>
     );
   }
 }
