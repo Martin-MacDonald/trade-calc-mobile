@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { connect } from 'react-redux';
 import applyScale from '../helpers/applyScale';
 import commonStyles from '../config/commonStyles';
+import alert from '../helpers/alert';
 
 const stdStyles = {
   buttonWidth: applyScale(50),
@@ -57,21 +58,15 @@ class TextInputContainer extends Component {
   componentDidUpdate() {
     const { errorState, errorMessage } = this.props;
     if (errorState) {
-      Alert.alert(
-        errorMessage.title,
-        errorMessage.message,
-        [
-          {
-            text: 'Ok',
-            style: 'cancel',
-          },
-        ],
-      );
+      alert({
+        title: errorMessage.title,
+        message: errorMessage.message
+      });
     }
   }
 
   render() {
-    const { children, loading } = this.props;
+    const { children, loading, nextButtonPress } = this.props;
     return (
       <Animated.View
         style={[styles.container, {
@@ -101,6 +96,8 @@ class TextInputContainer extends Component {
           loadingProps={{
             color: commonStyles.primaryColor
           }}
+          onPress={() => nextButtonPress()}
+          disabled={loading}
         />
       </Animated.View>
     );

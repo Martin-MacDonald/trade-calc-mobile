@@ -13,6 +13,12 @@ import RegistrationProgress from '../../components/RegistrationProgress';
 import constants from '../../config/constants';
 import commonStyles from '../../config/commonStyles';
 import applyScale from '../../helpers/applyScale';
+import alert from '../../helpers/alert';
+import {
+  checkUsername,
+  checkEmail,
+  checkPassword,
+} from '../../helpers/format';
 
 const styles = StyleSheet.create({
   container: commonStyles.container,
@@ -35,39 +41,57 @@ class Register extends Component {
       usernameFormatError: false,
       usernameExistsError: false,
       email: '',
+      emailFormatError: false,
       emailExistsError: false,
       password: '',
+      passwordFormatError: false,
       confirmPassword: '',
+      passwordMatchError: false,
       shownFieldIndex: 0,
     };
     this.inputFields = {};
     this.usernameFormatMessage = {
       title: 'Username Incorrect Format',
-      message: 'Must be between 6 and 12 digits and only contain alphanumeric characters',
+      message: 'Must be between 6 and 12 digits and only contain alphanumeric characters.',
     };
     this.usernameExistsMessage = {
       title: 'Username Exists',
-      message: 'Sorry but that username is already taken',
+      message: 'Sorry but that username is already taken.',
+    };
+    this.emailFormatMessage = {
+      title: 'Email Incorrect Format',
+      message: 'Please provide a valid email address to register.',
+    };
+    this.emailExistsMessage = {
+      title: 'Email Exists',
+      message: 'Sorry but that email is already linked to another account.',
+    };
+    this.passwordFormatMessage = {
+      title: 'Password Incorrect Format',
+      message: 'Passwords must be at least 8 characters with at least one lowercase and one uppercase letter and a digit.',
+    };
+    this.passwordMatchMessage = {
+      title: 'Password Match Error',
+      message: 'Your password confirmation does not match your password.',
     };
   }
 
   moveToNextField = (field) => {
     const { shownFieldIndex } = this.state;
-    if (shownFieldIndex === 3) return;
     this.setState({ shownFieldIndex: shownFieldIndex + 1 }, () => {
       if (field) this.inputFields[field].focus();
     });
   };
 
   checkUsername = async () => {
-    this.props.toggleLoading();
+    const { toggleLoading } = this.props;
     const { username } = this.state;
-    const usernameRegex = /^[a-zA-Z0-9]{6,12}$/;
-    if (!username || !(username.match(usernameRegex))) {
+    if (!username || !checkUsername(username)) {
       this.setState({ usernameFormatError: true });
       return;
     }
     try {
+      toggleLoading();
       const res = await fetch(`${constants.apiURL}/user/checkUsername`, {
         method: 'POST',
         headers: {
@@ -75,6 +99,7 @@ class Register extends Component {
         },
         body: JSON.stringify({ username })
       });
+      toggleLoading();
       if (res.status === 409) {
         this.setState({ usernameExistsError: true });
         return;
@@ -85,12 +110,22 @@ class Register extends Component {
       this.moveToNextField('email')
     } catch (err) {
       console.log(err);
+      alert({
+        title: 'Error',
+        message: 'Unable to check username. Please check you are connected to the internet.'
+      });
     }
   }
 
   checkEmail = async () => {
+    const { toggleLoading } = this.props;
     const { email } = this.state;
+    if (!email || !checkEmail(email)) {
+      this.setState({ emailFormatError: true });
+      return;
+    }
     try {
+      toggleLoading();
       const res = await fetch(`${constants.apiURL}/user/checkEmail`, {
         method: 'POST',
         headers: {
@@ -98,6 +133,7 @@ class Register extends Component {
         },
         body: JSON.stringify({ email })
       });
+      toggleLoading();
       if (res.status === 409) {
         this.setState({ emailExistsError: true });
         return;
@@ -108,8 +144,60 @@ class Register extends Component {
       this.moveToNextField('password')
     } catch (err) {
       console.log(err);
+      alert({
+        title: 'Error',
+        message: 'Unable to check email. Please check you are connected to the internet.'
+      });
     }
   }
+
+  checkPassword = async () => {
+    const { password, confirmPassword, shownFieldIndex } = this.state;
+    if (shownFieldIndex === 2) {
+      if (!password || !checkPassword(password)) {
+        this.setState({ passwordFormatError: true });
+        return;
+      }
+      this.moveToNextField('confirmPassword')
+    } else {
+      if (!confirmPassword || password !== confirmPassword) {
+        this.setState({ passwordMatchError: true });
+        return;
+      }
+      this.register();
+    }
+  };
+
+  register = async () => {
+    const { username, email, password } = this.state;
+    const { toggleLoading, navigation } = this.props;
+    const user = {
+      username,
+      email,
+      password,
+    };
+    try {
+      toggleLoading();
+      const res = await fetch(`${constants.apiURL}/user/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(user)
+      });
+      toggleLoading();
+      if (!res.ok) {
+        throw new Error('unable to register');
+      }
+      console.log('registered');
+    } catch (err) {
+      console.log(err);
+      alert({
+        title: 'Error',
+        message: 'Unable to register. Please check you are connected to the internet.'
+      });
+    }
+  };
 
   render() {
     const {
@@ -120,7 +208,12 @@ class Register extends Component {
       shownFieldIndex,
       usernameFormatError,
       usernameExistsError,
+      emailFormatError,
+      emailExistsError,
+      passwordFormatError,
+      passwordMatchError,
     } = this.state;
+    const { loading } = this.props;
     return (
       <ScrollView
         contentContainerStyle={[styles.container, { backgroundColor: commonStyles.primaryColor }]}
@@ -135,6 +228,7 @@ class Register extends Component {
           <TextInputContainer
             errorState={usernameFormatError || usernameExistsError}
             errorMessage={usernameFormatError ? this.usernameFormatMessage : this.usernameExistsMessage}
+            nextButtonPress={() => this.checkUsername()}
           >
             <TextInput
               style={styles.inputField}
@@ -150,55 +244,80 @@ class Register extends Component {
               returnKeyType='next'
               onSubmitEditing={() => this.checkUsername()}
               autoCapitalize='none'
+              editable={!loading}
             />
           </TextInputContainer>
         }
         {
           shownFieldIndex === 1 &&
-          <TextInputContainer>
+          <TextInputContainer
+            errorState={emailFormatError || emailExistsError}
+            errorMessage={emailFormatError ? this.emailFormatMessage : this.emailExistsMessage}
+            nextButtonPress={() => this.checkEmail()}
+          >
             <TextInput
               style={styles.inputField}
               ref={(input) => this.inputFields['email'] = input}
               textContentType='emailAddress'
-              onChangeText={(email) => this.setState({ email })}
+              onChangeText={(email) => this.setState({
+                email,
+                emailFormatError: false,
+                emailExistsError: false,
+              })}
               value={email}
               placeholder='Email'
               returnKeyType='next'
               onSubmitEditing={() => this.checkEmail()}
               autoCapitalize='none'
               keyboardType='email-address'
+              editable={!loading}
             />
           </TextInputContainer>
         }
         {
           shownFieldIndex === 2 &&
-          <TextInputContainer>
+          <TextInputContainer
+            errorState={passwordFormatError}
+            errorMessage={this.passwordFormatMessage}
+            nextButtonPress={() => this.checkPassword()}
+          >
             <TextInput
               style={styles.inputField}
               ref={(input) => this.inputFields['password'] = input}
               textContentType='password'
-              onChangeText={(password) => this.setState({ password })}
+              onChangeText={(password) => this.setState({
+                password,
+                passwordFormatError: false,
+              })}
               value={password}
               placeholder='Password'
               secureTextEntry
               returnKeyType='next'
-              onSubmitEditing={() => this.moveToNextField('confirmPassword')}
+              onSubmitEditing={() => this.checkPassword()}
             />
           </TextInputContainer>
         }
         {
           shownFieldIndex === 3 &&
-          <TextInputContainer>
+          <TextInputContainer
+            errorState={passwordMatchError}
+            errorMessage={this.passwordMatchMessage}
+            nextButtonPress={() => this.checkPassword()}
+          >
             <TextInput
               style={styles.inputField}
               ref={(input) => this.inputFields['confirmPassword'] = input}
               textContentType='password'
-              onChangeText={(confirmPassword) => this.setState({ confirmPassword })}
+              onChangeText={(confirmPassword) => this.setState({
+                confirmPassword,
+                passwordMatchError: false,
+              })}
               value={confirmPassword}
               placeholder='Confirm Password'
               secureTextEntry
               returnKeyType='done'
-              onSubmitEditing={() => this.moveToNextField()}
+              onSubmitEditing={() => this.checkPassword()}
+              editable={!loading}
             />
           </TextInputContainer>
         }
@@ -207,10 +326,14 @@ class Register extends Component {
   }
 }
 
+const mapStateToProps = state => ({
+  loading: state.loading,
+});
+
 const mapDispatchToProps = dispatch => (
   bindActionCreators({
     toggleLoading,
   }, dispatch)
 );
 
-export default connect(null, mapDispatchToProps)(Register);
+export default connect(mapStateToProps, mapDispatchToProps)(Register);
