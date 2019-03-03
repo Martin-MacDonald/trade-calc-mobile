@@ -189,7 +189,7 @@ class Register extends Component {
       if (!res.ok) {
         throw new Error('unable to register');
       }
-      console.log('registered');
+      navigation.navigate('ConfirmEmail');
     } catch (err) {
       console.log(err);
       alert({
