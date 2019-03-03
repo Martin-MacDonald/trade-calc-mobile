@@ -5,7 +5,9 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { Button } from 'react-native-elements';
 import { Ionicons } from '@expo/vector-icons';
+import { connect } from 'react-redux';
 import applyScale from '../helpers/applyScale';
 import commonStyles from '../config/commonStyles';
 
@@ -29,9 +31,11 @@ const styles = StyleSheet.create({
     height: '100%',
     width: stdStyles.buttonWidth,
     backgroundColor: '#fff',
+    borderRadius: 0,
   },
   nextButton: {
-    textAlign: 'center',
+    backgroundColor: 'transparent',
+    height: '100%',
   }
 });
 
@@ -67,7 +71,7 @@ class TextInputContainer extends Component {
   }
 
   render() {
-    const { children } = this.props;
+    const { children, loading } = this.props;
     return (
       <Animated.View
         style={[styles.container, {
@@ -83,19 +87,28 @@ class TextInputContainer extends Component {
         >
           {children}
         </View>
-        <View
-          style={styles.nextButtonContainer}
-        >
-          <Ionicons
-            style={styles.nextButton}
-            name='md-arrow-forward'
-            color={commonStyles.primaryColor}
-            size={commonStyles.iconSize}
-          />
-        </View>
+        <Button
+          containerStyle={styles.nextButtonContainer}
+          buttonStyle={styles.nextButton}
+          icon={
+            <Ionicons
+              name='md-arrow-forward'
+              color={commonStyles.primaryColor}
+              size={commonStyles.iconSize}
+            />
+          }
+          loading={loading}
+          loadingProps={{
+            color: commonStyles.primaryColor
+          }}
+        />
       </Animated.View>
     );
   }
 }
 
-export default TextInputContainer;
+const mapStateToProps = state => ({
+  loading: state.loading,
+});
+
+export default connect(mapStateToProps)(TextInputContainer);

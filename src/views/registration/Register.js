@@ -5,6 +5,9 @@ import {
   StyleSheet,
   StatusBar,
 } from 'react-native';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { toggleLoading } from '../../store/actions';
 import TextInputContainer from '../../components/TextInputContainer';
 import RegistrationProgress from '../../components/RegistrationProgress';
 import constants from '../../config/constants';
@@ -57,6 +60,7 @@ class Register extends Component {
   };
 
   checkUsername = async () => {
+    this.props.toggleLoading();
     const { username } = this.state;
     const usernameRegex = /^[a-zA-Z0-9]{6,12}$/;
     if (!username || !(username.match(usernameRegex))) {
@@ -203,4 +207,10 @@ class Register extends Component {
   }
 }
 
-export default Register;
+const mapDispatchToProps = dispatch => (
+  bindActionCreators({
+    toggleLoading,
+  }, dispatch)
+);
+
+export default connect(null, mapDispatchToProps)(Register);
